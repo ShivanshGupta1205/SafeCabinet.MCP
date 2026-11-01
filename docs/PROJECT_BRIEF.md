@@ -1,155 +1,148 @@
-# PROJECT_BRIEF.md — Drug Information MCP Server
+# PROJECT_BRIEF.md — Consumer Product-Safety MCP Server (openFDA)
 
-Read this alongside `CLAUDE.md` (operating rules) and `LEARNING_LOG.md` (build/learning journal). This brief is the technical spec — the north star. `DECISIONS.md` records *why* the major choices were made.
+Read this alongside `CLAUDE.md` (operating rules), `DECISIONS.md` (why each choice was made) and `LEARNING_LOG.md` (build journal). This brief is the north star.
 
-> Repo/package name is still `Clinical-Guidelines-MCP` / `clinical_guidelines_mcp` for now (see DECISIONS.md D8). The *subject* has changed from CDC clinical guidelines to **FDA drug information via openFDA**.
+> Repo/package name is still `Clinical-Guidelines-MCP` / `clinical_guidelines_mcp` for now (DECISIONS.md D8). Revisit before public launch.
 
 ## What this is
-An **MCP server** that exposes public FDA drug information to an LLM client through a set of tools. It deliberately mixes two retrieval styles:
-- **Structured / exact lookup** — facts read straight from structured data (ingredient strengths, adverse-event counts, recalls). Deterministic, no guessing. *This is the core.*
-- **Semantic search** — fuzzy, meaning-based search over free-text label sections (warnings, indications). Useful but secondary.
+An **MCP server for everyday people** that answers practical safety questions about the medicines, food and personal-care products in their home, using **live, official FDA data** from openFDA.
 
-Plus the MCP-specific feature that plain RAG cannot do: **elicitation** — the server asks the client a clarifying question (e.g. which drug product / population) before answering.
+- *"Is my blood-pressure medicine recalled? Is my bottle's lot affected?"*
+- *"The pharmacy says my prescription is backordered. Is it a national shortage, and what FDA-rated equivalents exist?"*
+- *"I got a rash after starting this drug. Have other people reported that?"*
+- *"Is this baby formula brand under a recall?"*
+- *"Are there injury reports for this skincare brand?"*
 
-Portfolio project, meant to hold up under interview questioning. The emphasis (exact-lookup + elicitation first, semantic search second) is deliberate — it's what makes this an MCP project rather than a RAG demo. See DECISIONS.md D3/D4.
+The LLM handles the messy parts (reading a pasted medication list or a label photo, explaining legal recall language in plain words). The MCP tools supply the **hard facts**, so the LLM never has to guess them.
 
-## Data source — openFDA
-openFDA is the FDA's free, public data service. It returns clean JSON over HTTP — **no scraping, no PDF parsing**. Base URL: `https://api.fda.gov/`. Free API key is optional (raises daily rate limit to ~120k/day; ~1k/day without).
+Not medical advice. openFDA's own disclaimer is carried in tool output and in the server prompt.
 
-| Endpoint | What it gives | Retrieval style it feeds |
+## Principles (each one is a decision in DECISIONS.md)
+1. **Consumer-first** (D15). One kind of user, real problems, five focused tools.
+2. **Live data, no database** (D14). Query openFDA per request; store only data that is ours.
+3. **Facts and their limits** (D16). Every tool returns the caveats its data needs, so honest answers are the default.
+4. **Elicitation is core** (D4). When a question is ambiguous (which manufacturer? which lot? which formulation?), the server asks before answering. This is a true MCP capability with no RAG equivalent.
+5. **Built to scale** (D17). Stateless instances, shared cache, an upstream rate budget, resilience, observability.
+6. **Reproducible tests and evals** (D18). Recorded openFDA responses (fixtures), not live data.
+
+## Data source — openFDA (`https://api.fda.gov/`)
+Clean JSON over HTTP. Free API key raises limits to 240 requests/min and 120,000/day per key. That budget is shared by every user of a hosted server (see D17).
+
+| Endpoint | Records (Oct 2026) | Key fields | Used by |
+|---|---|---|---|
+| `/drug/enforcement.json` | ~18k (≈1.75k Class I) | `classification`, `status`, `reason_for_recall`, `recalling_firm`, `product_description`, `code_info` (lot numbers, free text), `distribution_pattern`, `recall_initiation_date` | `check_drug_recalls` |
+| `/food/enforcement.json` | ~29.5k | same as drug, plus `more_code_info` | `check_food_recalls` |
+| `/drug/event.json` (FAERS) | millions | `count=patient.reaction.reactionmeddrapt.exact` → ranked reaction counts | `get_side_effect_reports` |
+| `/drug/shortages.json` | ~1.6k | `generic_name`, `status`, `availability`, `therapeutic_category`, `company_name`, `presentation`, `update_date` | `check_drug_shortage` |
+| `/drug/drugsfda.json` | — | `products[].te_code` (therapeutic-equivalence code, e.g. `AB`), `brand_name`, `active_ingredients`, `marketing_status` | `check_drug_shortage` (equivalents) |
+| `/cosmetic/event.json` | ~85.5k | `products[].product_name`, `reactions`, `outcomes`. **No ingredient lists** (D19). | `get_cosmetic_reports` |
+| `/drug/label.json`, `/drug/ndc.json` | — | brand/generic names, `is_original_packager`, `product_ndc` | name resolution + canonical record selection (D12) |
+
+Known data limits the tools must surface (D16):
+- **Adverse-event counts** (FAERS, cosmetics) are voluntary reports. No denominator, so they are **not rates**. They are skewed by popularity, news and lawsuits, and they never prove cause.
+- **Shortages** are national. They can't say whether a local pharmacy is out.
+- **Lot numbers** live inside free text (`code_info`). Matching is best-effort and must say so.
+- **US products only.** No foreign brand names, and no off-label uses (absent from labels by definition).
+
+## The five tools
+```python
+check_drug_recalls(product: str, manufacturer: str | None = None, lot_number: str | None = None)
+check_food_recalls(brand: str, product: str | None = None, lot_number: str | None = None)
+get_side_effect_reports(drug: str, symptom: str | None = None, top_k: int = 10)
+check_drug_shortage(drug: str)                     # includes FDA-rated equivalents via te_code
+get_cosmetic_reports(brand_or_product: str, top_k: int = 10)
+```
+Signatures are a starting point. Refine them while building, and record changes in DECISIONS.md.
+
+| Tool | When it elicits (asks the user first) | Must-carry caveats |
 |---|---|---|
-| `/drug/label.json` | Official drug label, split into named sections (`indications_and_usage`, `dosage_and_administration`, `warnings`, `boxed_warning`, `contraindications`, `adverse_reactions`, `drug_interactions`, `use_in_specific_populations`, `overdosage`, …). Section names are structured; text inside is free-form. | **Semantic search** (free-text sections) |
-| `/drug/ndc.json` | National Drug Code directory. Truly structured fields: `active_ingredients` (name + strength), `dosage_form`, `route`, `product_type`, packaging. | **Exact lookup** (structured facts) |
-| `/drug/event.json` | Adverse-event reports (FAERS). With `count=`, returns ranked **counts** of reactions per drug. | **Exact lookup** (real numbers) |
-| `/drug/enforcement.json` | Drug recalls (what, why, severity). | **Exact lookup** (structured records) |
+| `check_drug_recalls` | Several manufacturers/products match → "Which manufacturer is on your bottle?" Recall found but no lot given → "What's the lot number on the label?" | Lot matching is best-effort; "no recall found" ≠ "safe"; data freshness |
+| `check_food_recalls` | Brand matches many products → "Which product/size?" | Same as drug recalls |
+| `get_side_effect_reports` | Name maps to several distinct drugs/formulations | Not a rate; not proof of cause; reporting bias; talk to a clinician |
+| `check_drug_shortage` | Ingredient has several formulations/strengths in shortage | National, not local; equivalents are options to ask a pharmacist about |
+| `get_cosmetic_reports` | Brand vs. specific product unclear | Same as side effects; no ingredient-level data |
 
-Harmonized identifiers across endpoints (so the same drug can be matched everywhere): `generic_name`, `brand_name`, `product_ndc`, `spl_set_id`, `route`, `dosage_form`, `product_type`, `rxcui`, `unii`.
+### Shared output envelope
+Every tool returns the same outer shape, so the LLM and the evals can rely on it:
+```json
+{
+  "query": {"...": "the resolved inputs actually used"},
+  "results": ["... tool-specific items ..."],
+  "match_count": 0,
+  "source": "openFDA /drug/enforcement",
+  "data_last_updated": "2026-10-28",
+  "data_limitations": ["..."],
+  "disclaimer": "Not medical advice. ..."
+}
+```
 
-**Corpus is curated/pinned, not crawled** (DECISIONS.md D2): a deliberately chosen set of ~15–30 drugs across a few therapeutic areas, so the eval harness runs against a fixed, reproducible set. "Deliberately scoped," never "comprehensive." Not medical advice — openFDA's own disclaimer is baked into the server prompt.
+## MCP capabilities
+| Primitive | Build? | Notes |
+|---|---|---|
+| Tools | Core | The five above |
+| Elicitation | Core | Per the table above |
+| Prompts | Yes, 1–2 | e.g. `medicine_cabinet_check` (walk a pasted medication list through recalls + shortages); carries the disclaimer |
+| Resources | Lean / optional | e.g. a static "how to read these results" guide the client can load |
+| Sampling | Stretch | Design for it; don't depend on client support |
+| Roots | Skip, explicitly | No reason to browse the client's filesystem. Say so in the README |
 
 ## Architecture
 ```
-Ingestion (offline/batch)
-  openFDA API (httpx) → normalize JSON → write structured facts + label sections
-        ↓
-Postgres + pgvector
-  drugs | drug_facts | drug_label_sections | adverse_event_counts | recalls | tool_call_log
-        ↓
-MCP server (Python, official mcp SDK)
-  tools / resources / prompts / elicitation
-  stdio (local dev) → Streamable HTTP (remote)
-        ↓
-  Claude Desktop (manual)      Eval harness (scripted MCP client, CI)
+MCP client (Claude Desktop, any MCP client)
+        │  stdio (local dev)  →  Streamable HTTP (remote)
+        ▼
+Load balancer
+        ▼
+MCP server instances — stateless, N copies
+  server/  : tool registration, elicitation, prompts, auth, per-client rate limit
+  tools/   : one module per tool — resolve input → query → shape output + caveats
+  openfda/ : the ONLY code that knows openFDA URLs — httpx, timeouts,
+             retries + backoff, circuit breaker, upstream rate budget
+  cache/   : TTL cache (in-process locally → Redis when multi-instance)
+        ▼
+openFDA API
+
+Telemetry: structured logs + metrics + traces (OpenTelemetry)
+Evals: scripted MCP client replaying recorded fixtures, run in CI
 ```
 
-## DB schema (draft — refine while building)
-```sql
-CREATE TABLE drugs (
-  drug_id        TEXT PRIMARY KEY,        -- deterministic, from a stable openFDA id (e.g. spl_set_id or product_ndc)
-  generic_name   TEXT,
-  brand_name     TEXT,
-  product_ndc    TEXT,
-  spl_set_id     TEXT,
-  product_type   TEXT,                    -- 'HUMAN PRESCRIPTION DRUG' | 'HUMAN OTC DRUG' | ...
-  route          TEXT,
-  dosage_form    TEXT,
-  source_url     TEXT,
-  ingested_at    TIMESTAMPTZ DEFAULT now()
-);
-
-CREATE TABLE drug_facts (                 -- the exact-lookup / "not RAG" table (from /drug/ndc)
-  fact_id        SERIAL PRIMARY KEY,
-  drug_id        TEXT REFERENCES drugs(drug_id) ON DELETE CASCADE,
-  subject        TEXT NOT NULL,           -- e.g. active ingredient name
-  value          TEXT NOT NULL,           -- e.g. strength value
-  unit           TEXT,                    -- e.g. 'mg'
-  kind           TEXT                     -- 'active_ingredient' | 'strength' | ...
-);
-
-CREATE TABLE drug_label_sections (        -- the semantic-search leg (from /drug/label)
-  section_id     SERIAL PRIMARY KEY,
-  drug_id        TEXT REFERENCES drugs(drug_id) ON DELETE CASCADE,
-  section        TEXT NOT NULL,           -- e.g. 'warnings', 'indications_and_usage'
-  section_text   TEXT NOT NULL,
-  embedding      VECTOR(384)              -- nullable; filled in the embeddings phase
-);
-
-CREATE TABLE adverse_event_counts (       -- exact numbers (from /drug/event count=)
-  id             SERIAL PRIMARY KEY,
-  drug_id        TEXT REFERENCES drugs(drug_id) ON DELETE CASCADE,
-  reaction       TEXT NOT NULL,
-  report_count   INT NOT NULL
-);
-
-CREATE TABLE recalls (                     -- exact records (from /drug/enforcement)
-  id             SERIAL PRIMARY KEY,
-  drug_id        TEXT REFERENCES drugs(drug_id) ON DELETE CASCADE,
-  reason         TEXT,
-  classification TEXT,                    -- recall severity class
-  status         TEXT,
-  recall_date    DATE
-);
-
-CREATE TABLE tool_call_log (               -- telemetry
-  id             SERIAL PRIMARY KEY,
-  ts             TIMESTAMPTZ DEFAULT now(),
-  tool_name      TEXT,
-  params         JSONB,
-  latency_ms     INT,
-  result_count   INT,
-  elicitation_triggered BOOLEAN DEFAULT false
-);
+### Target code layout
 ```
-
-Revision strategy: whole-drug replacement (delete the `drugs` row → cascades to facts/sections/events/recalls → re-ingest). `drug_id` is deterministic so re-ingestion targets the same row.
-
-## MCP capabilities — build decisions
-| Primitive | Build? | Notes |
-|---|---|---|
-| Tools | Yes, core | See signatures below |
-| Elicitation | **Yes, core** (promoted from stretch) | The differentiator. Ask for the specific drug product / population before answering. |
-| Resources | Yes, lean | `drug://ndc/{product_ndc}` and `drug://label/{drug_id}/{section}` — structured facts + cleaned section text |
-| Prompts | Yes, 1–2 | `drug_query`, `drug_summary` (bakes in openFDA's "not medical advice" disclaimer) |
-| Sampling | Stretch | Server-initiated disambiguation where a client supports it. Design for it, don't depend on it. |
-| Roots | Skip, explicitly | No reason to browse client filesystem. State this decision in the README. |
-
-### Tool signatures (exact-lookup + elicitation first; semantic second)
-```python
-# --- Core: exact lookup + elicitation (build first) ---
-find_drug(name: str)                                   # resolve name -> product(s); elicits on ambiguity
-get_dosing(drug: str, population: str | None = None)   # strength/form/route (structured) + dosing; elicits population
-top_adverse_events(drug: str, top_k: int = 10)         # ranked counts from FAERS (pure exact numbers)
-check_recalls(drug: str)                               # structured recall records
-
-# --- Secondary: semantic search (build after embeddings) ---
-search_label(drug: str, question: str, top_k: int = 5) # fuzzy search over free-text label sections
-
-# --- Stretch ---
-compare_drugs(drug_a: str, drug_b: str, aspect: str)   # e.g. compare warnings / adverse-event profiles
+src/clinical_guidelines_mcp/
+  openfda/   client.py (+ response models)
+  tools/     drug_recalls.py, food_recalls.py, side_effects.py, shortages.py, cosmetics.py
+  cache/
+  server/    MCP wiring + entry point
+  eval/      golden-set runner
+tests/
+  fixtures/  recorded openFDA responses (D18)
 ```
+The old `db/` and `ingestion/` packages go away. `ingestion/explore.py` is the exploration spike; its learnings move into `openfda/`.
 
-## Eval harness requirements
-Scripted MCP client (not the Claude Desktop UI) runs a hand-written golden set (40–60 queries), scoring separately:
-- tool selection accuracy (did it pick the right tool?)
-- parameter extraction accuracy (did it fill the tool's inputs right?)
-- answer correctness (exact match for structured facts; LLM-as-judge with a fixed faithfulness+relevance rubric for semantic answers)
-- elicitation precision (triggers on the ambiguous subset, not on the rest)
-- latency
+## Evals
+A scripted MCP client (not the Claude Desktop UI) runs a hand-written golden set of 40–60 queries against fixtures, scoring separately:
+- **Tool selection**: did it pick the right tool?
+- **Parameter extraction**: did it fill the inputs correctly (e.g. pull the manufacturer out of a pasted label)?
+- **Answer correctness**: exact match on structured facts (recall class, status, counts).
+- **Elicitation precision**: asks on the ambiguous subset, and only there.
+- **Caveat compliance**: the final answer keeps the limits (never turns report counts into "common", never calls "no recall found" "safe"). LLM-as-judge with a fixed rubric.
+- **Latency**, plus cache hit rate under the replay.
 
-Do not reuse a RAG-only eval framework as-is — this measures tool-call correctness, not just retrieval.
+Golden-set products come from `docs/CORPUS.md`. Runs in GitHub Actions on push.
 
-## Tech stack (pinned)
-- Python + official `mcp` SDK
-- Postgres + pgvector
-- Embeddings: local sentence-transformers model (small BGE variant) — no paid API (DECISIONS.md D6)
-- Ingestion: `httpx` against openFDA JSON endpoints
-- Testing: `pytest` per tool; eval harness wired into GitHub Actions
-- Transport: stdio → Streamable HTTP; auth is API key for MVP, OAuth 2.1 only if it becomes genuinely multi-user
+## Tech stack
+- Python ≥ 3.11, official `mcp` SDK, managed with `uv` (`pyproject.toml` + `uv.lock`)
+- `httpx` for openFDA
+- Cache: in-process TTL → Redis
+- `pytest` with recorded fixtures; eval harness in GitHub Actions
+- Docker; deploy behind a load balancer
+- OpenTelemetry for traces/metrics; structured JSON logs
+- Auth (HTTP only): OAuth 2.1 via a managed provider, WorkOS AuthKit or Auth0, decided in Phase 5 (D20). Privacy-safe access logs (D20).
 
-## Phases (code-first; exact-lookup + MCP core prioritized)
-1. **Ingestion** — fetch label + ndc (+ event, enforcement) for the curated drug set; normalize; write `drugs`, `drug_facts`, `drug_label_sections` (embedding NULL), `adverse_event_counts`, `recalls`.
-2. **MCP core (exact + elicitation)** — `find_drug`, `get_dosing`, `top_adverse_events`, `check_recalls`; stdio server working in Claude Desktop; elicitation on ambiguous drug/population.
-3. **Semantic leg** — generate embeddings; `search_label`; resources + one prompt.
-4. **Evaluation** — golden set, harness, telemetry logging.
-5. **Deployment** — Streamable HTTP, containerize, deploy.
-6. **Stretch** — `compare_drugs`, caching/index tuning, versioning/monitoring.
+## Phases (code-first)
+1. **openFDA client.** One small client: build queries, timeouts, typed errors (not found / rate limited / upstream down). Record the first fixtures. Builds directly on `explore.py`.
+2. **First tool end-to-end: `check_drug_recalls`.** Running in Claude Desktop over stdio, with elicitation (manufacturer, lot), the shared envelope and caveats, and pytest on fixtures. This proves the whole path before widening.
+3. **Remaining four tools.** Food recalls → shortages (+ equivalents) → side-effect reports → cosmetic reports.
+4. **Evals.** Golden set, scripted client, CI. Measure before optimizing.
+5. **Scale and ops.** Streamable HTTP, stateless instances, cache (in-process → Redis), upstream rate budget, retries/circuit breaker, OAuth via managed provider + per-user rate limits + privacy-safe access logs (D20), Docker, load-balanced deploy, observability.
+6. **Stretch.** Medication watchlist with new-recall alerts (first data that is truly ours → small store, per D14), more beauty-domain tools, sampling.

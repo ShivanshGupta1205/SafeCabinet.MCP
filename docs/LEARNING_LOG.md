@@ -23,4 +23,10 @@ After building a meaningful piece, add an entry:
 - **Tripped me up:** Spent a week on CDC theory with no code and a painful, structureless data source. Fix: code-first, and pick sources with real APIs.
 - **Could explain in an interview?** yes (this is a good "what would you do differently" story)
 
-<!-- next entry: Phase 1 ingestion — first real openFDA fetch -->
+### 2026-10-29 — Second pivot: consumer product-safety MCP server, no database
+- **Built:** No code. Explored the openFDA endpoints (`explore.py`), researched existing openFDA products and MCP servers, then re-scoped: everyday consumers, five tools (drug recalls, food recalls, side-effect reports, shortages + equivalents, cosmetic reports), live queries instead of a database.
+- **Concept it taught:** Start from a user and a problem, not from the tech you want to show. And: store only data that is yours. Copying a well-served API into your own database adds weight and, for recalls, makes data dangerously stale.
+- **Tripped me up:** The database felt "production-grade" but wasn't serving the product. Also: adverse-event counts look like statistics but aren't rates (no denominator), so tools must ship their limits with the numbers (D16).
+- **Could explain in an interview?** yes
+
+<!-- next entry: Phase 1 — openFDA client + first fixtures -->
