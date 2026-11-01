@@ -5,6 +5,7 @@ One line per meaningful change, per docs/CLAUDE.md convention.
 ## 2026-11-01
 - Recorded D20 (proposed): managed OAuth provider (WorkOS AuthKit or Auth0, decided in Phase 5) + privacy-safe access logging; added auth to the brief.
 - Added `plan.md`: 15-step, 3-day build plan plus a scale & ops backlog.
+- Renamed the project to **SafeCabinet** (D21): `pyproject.toml` name `safecabinet`, brief and README updated, D8 superseded.
 
 ## 2026-10-29
 - Re-scoped to a consumer product-safety MCP server with five tools: drug recalls, food recalls, side-effect reports, drug shortages (+ FDA-rated equivalents), cosmetic reports (D15).

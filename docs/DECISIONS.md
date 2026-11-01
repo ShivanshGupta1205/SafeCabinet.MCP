@@ -41,7 +41,7 @@ Status values: `accepted` (in force), `superseded` (replaced by a later entry), 
 - **Decision:** Single Postgres database with the pgvector extension.
 - **Why:** One store for both structured (exact) and vector (semantic) data; production-standard; avoids running a separate vector DB.
 
-### D8 — Keep the repo/package name for now — `accepted`
+### D8 — Keep the repo/package name for now — `superseded by D21`
 - **Context:** Subject changed from clinical guidelines to FDA drug info; repo is `Clinical-Guidelines-MCP`.
 - **Decision:** Keep `Clinical-Guidelines-MCP` / `clinical_guidelines_mcp` for now.
 - **Why:** Drug labels are clinical information (defensible), and renaming later is cheap enough. Revisit before public launch.
@@ -131,3 +131,8 @@ Status values: `accepted` (in force), `superseded` (replaced by a later entry), 
   Free-tier numbers to be re-verified on vendor pricing pages at decision time.
 - **Logging rule:** log user ID, time, tool, latency, outcome, elicitation flag. Do **not** tie raw query text (drug names, symptoms) to identity by default; keep any query samples for debugging/evals separate and anonymized. Set a retention limit (30–90 days) and publish a short privacy policy.
 - **Why:** Identity enables per-user rate limits, access records and the future watchlist. Managed auth avoids building security-critical code. The logging rule keeps us from holding personal health data tied to identity.
+
+### D21 — Project name: SafeCabinet — `accepted`
+- **Context:** The old name (`Clinical-Guidelines-MCP`) described the abandoned CDC project. The product now covers medicines, food and cosmetics for everyday users, so drug-only ("Rx") names no longer fit either.
+- **Decision:** Name the project **SafeCabinet**. Distribution name `safecabinet` in `pyproject.toml`; import package `src/safecabinet/`. GitHub repo rename is done separately in GitHub settings.
+- **Why:** It pictures the user's own cabinets (medicine, kitchen, bathroom), which covers all five tools. It was unused on PyPI and GitHub when checked (2026-11-01). It avoids "FDA" in the name, which could look like an official FDA product.
