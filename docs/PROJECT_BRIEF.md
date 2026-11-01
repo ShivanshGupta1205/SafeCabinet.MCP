@@ -1,8 +1,8 @@
-# PROJECT_BRIEF.md — Consumer Product-Safety MCP Server (openFDA)
+# PROJECT_BRIEF.md — SafeCabinet: Consumer Product-Safety MCP Server (openFDA)
 
 Read this alongside `CLAUDE.md` (operating rules), `DECISIONS.md` (why each choice was made) and `LEARNING_LOG.md` (build journal). This brief is the north star.
 
-> Repo/package name is still `Clinical-Guidelines-MCP` / `clinical_guidelines_mcp` for now (DECISIONS.md D8). Revisit before public launch.
+> Project name: **SafeCabinet**. Package `safecabinet` (DECISIONS.md D21).
 
 ## What this is
 An **MCP server for everyday people** that answers practical safety questions about the medicines, food and personal-care products in their home, using **live, official FDA data** from openFDA.
@@ -108,7 +108,7 @@ Evals: scripted MCP client replaying recorded fixtures, run in CI
 
 ### Target code layout
 ```
-src/clinical_guidelines_mcp/
+src/safecabinet/
   openfda/   client.py (+ response models)
   tools/     drug_recalls.py, food_recalls.py, side_effects.py, shortages.py, cosmetics.py
   cache/
