@@ -29,4 +29,10 @@ After building a meaningful piece, add an entry:
 - **Tripped me up:** The database felt "production-grade" but wasn't serving the product. Also: adverse-event counts look like statistics but aren't rates (no denominator), so tools must ship their limits with the numbers (D16).
 - **Could explain in an interview?** yes
 
-<!-- next entry: Phase 1 — openFDA client + first fixtures -->
+### 2026-11-01 — Step 1: project setup (SafeCabinet)
+- **Built:** `src/safecabinet/` package with `openfda/`, `tools/`, `server/`, `evals/`; `tests/fixtures/`; `.env` + `.env.example`; deps via `uv` (`pytest` as dev-only); renamed project to SafeCabinet; repo remote moved to `SafeCabinet.MCP`.
+- **Concept it taught:** In a src layout, Python imports by **folder name**, not the `pyproject` name. Folders straight under `src/` become top-level packages (generic names like `server` can clash), so everything sits inside one package folder. Git doesn't track empty folders; `__init__.py` both makes a package and gives git a file. Tests live outside `src/` so they exercise the installed package.
+- **Tripped me up:** First attempt put `openfda/`, `server/`, `tools/` directly under `src/` (with `src/__init__.py`), so `import safecabinet` failed. Fixed by nesting under `src/safecabinet/`. Check: `uv run python -c "import safecabinet.openfda, safecabinet.tools, safecabinet.server"`.
+- **Could explain in an interview?** yes
+
+<!-- next entry: Day 1 — openFDA client + check_drug_recalls logic, tests green -->

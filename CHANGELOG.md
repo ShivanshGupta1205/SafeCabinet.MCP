@@ -2,9 +2,15 @@
 
 One line per meaningful change, per docs/CLAUDE.md convention.
 
+## 2026-11-25
+- Replanned the build around a 5–6 day spring-break sprint; rewrote `plan.md` (D23). Finish line is now "all five tools working locally in Claude Desktop, with tests" — HTTP, OAuth, deploy, and CI eval pushed to an explicit backlog.
+- Decided elicitation goes with the fallback (`needs_clarification` field) by default, skipping the research spike (D22).
+- Restored `src/safecabinet/__init__.py` (had gone missing from disk; was still git-tracked).
+
 ## 2026-11-01
 - Recorded D20 (proposed): managed OAuth provider (WorkOS AuthKit or Auth0, decided in Phase 5) + privacy-safe access logging; added auth to the brief.
 - Added `plan.md`: 15-step, 3-day build plan plus a scale & ops backlog.
+- Step 1 done: `src/safecabinet/` package (`openfda/`, `tools/`, `server/`, `evals/`), `tests/fixtures/`, `.env.example`, `mcp` + dev `pytest` via uv, remote moved to `SafeCabinet.MCP`.
 - Renamed the project to **SafeCabinet** (D21): `pyproject.toml` name `safecabinet`, brief and README updated, D8 superseded.
 
 ## 2026-10-29

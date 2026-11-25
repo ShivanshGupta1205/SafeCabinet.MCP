@@ -1,128 +1,97 @@
-# plan.md — 3-day build plan
+# plan.md — spring-break build plan (5–6 days)
 
-Code-first. Build → test → see what breaks → fix → note it in `docs/LEARNING_LOG.md`.
-Each step has one clear output and a "done when" check. Times are targets, not promises.
-**Rule:** if a step blows past 2× its time, stop, write down what's blocking, and cut scope. Don't sink the day into it.
+> Replanned 2026-11-25 (D23). The old 3-day plan assumed full-time focus and didn't survive a semester. This one assumes you're a student on break: real days, but not endless ones. **Finish line for this sprint: all five tools working locally in Claude Desktop, with tests.** HTTP, auth, deploy, and CI eval all move to the backlog at the bottom — they're real, just not this week's problem.
 
-Who writes what: **you write the code first**, then hand it to Claude for review (per `docs/CLAUDE.md`).
+Code-first, same as before: **you write the code, then hand it to Claude for review** (`docs/CLAUDE.md`). The difference this time: fewer research/planning steps, more "open an editor and write a function" steps. Elicitation and deploy-host questions are already decided (D22) so you don't spend a day deciding instead of building.
 
----
-
-## Day 1 — One tool, working end to end
-
-The goal for today: Claude Desktop answers "is my medicine recalled?" using *your* server.
-
-### Step 1 — Setup (30 min)
-- Get a free openFDA API key. Put it in `.env` (already gitignored), and add a `.env.example` with the variable name only.
-- Add `mcp` and `pytest` to `pyproject.toml` via `uv add`. Delete `requirements.txt` (pyproject is the source of truth).
-- Create the target folders: `openfda/`, `tools/`, `server/`, `tests/fixtures/`. Remove `db/`. Keep `explore.py` for now as reference.
-- **Done when:** `uv run python -c "import mcp, httpx"` works.
-
-### Step 2 — Research: does Claude Desktop support elicitation? (20 min)
-- Check the current MCP docs/client support table. Elicitation is a core feature (D4), so we need to know *now* whether the main client can show it.
-- Decide the fallback if it can't: the tool returns a `needs_clarification` result listing the options, and the LLM asks the user.
-- **Done when:** one line in `DECISIONS.md` saying "elicitation: native" or "elicitation: fallback until supported".
-
-### Step 3 — Build the openFDA client (1.5 h)
-- `openfda/client.py`: one function, e.g. `get(endpoint, search, limit, count=None)`.
-  - Uses the API key, a timeout, and builds the query string.
-  - Turns failures into **clear errors**: `NotFound` (openFDA returns 404 for zero matches), `RateLimited` (429), `UpstreamError` (5xx / timeout).
-- **Test:** call it live once for drug recalls, for one drug from `CORPUS.md`. Save that raw response to `tests/fixtures/drug_enforcement_<drug>.json`. Also save one "no results" response.
-- **Done when:** a live call returns data; a junk search raises `NotFound`, not a crash.
-
-### Step 4 — Build tool 1 logic: `check_drug_recalls` (2 h)
-- `tools/drug_recalls.py`: a plain Python function, **no MCP yet**. Input: product, optional manufacturer, optional lot number. Output: the shared envelope from the brief (`results`, `match_count`, `source`, `data_last_updated`, `data_limitations`, `disclaimer`).
-- Each result: classification, status, reason, firm, recall date, product description.
-- Lot matching: simple "does the lot appear in `code_info`?" check, labelled best-effort.
-- Ambiguity: if several different firms match and no manufacturer was given, return a clarification result instead of guessing.
-- **Test:** `tests/test_drug_recalls.py` runs against the fixtures (no network): a recall found, no recall found ("no recall found" ≠ "safe" caveat present), lot match, ambiguous firms.
-- **Done when:** `uv run pytest` is green with zero network calls.
-
-### Step 5 — Wrap it as an MCP server (1 h)
-- `server/main.py`: an MCP server (official SDK) over **stdio** with one tool, `check_drug_recalls`, that calls your Step 4 function. Write a clear tool description: the LLM picks tools by reading these.
-- Add elicitation (or the Step 2 fallback) for the ambiguous-firm case.
-- **Test:** run it with the MCP Inspector (`npx @modelcontextprotocol/inspector`) and call the tool by hand.
-- **Done when:** the Inspector shows the tool and returns a real envelope.
-
-### Step 6 — Connect to Claude Desktop (30 min)
-- Add the server to Claude Desktop's config. Ask in plain English: "Is Tylenol recalled?", then an ambiguous one, then a junk product.
-- Write down every time Claude picks the wrong tool, misreads the output, or drops a caveat. These become eval cases on Day 3.
-- **Done when:** Claude answers a recall question from your tool's data.
-- **End of Day 1:** commit, plus a `LEARNING_LOG.md` entry.
+**Rule:** if a step blows past 2× its time, stop, write down what's blocking, and move on. Cut order if you fall behind: cache → mini-eval → polish. Never cut tests.
 
 ---
 
-## Day 2 — The other four tools
+## Day 1 — openFDA client + first tool's logic (no MCP yet)
+Goal: a plain Python function that answers "is this drug recalled?" — provably, with tests, no network at test time.
 
-Each tool repeats the Day 1 pattern: **save fixtures → plain function → tests → register in server → try in Claude Desktop.** Steps 7–10 don't depend on each other, so you can do them in any order.
+1. **Commit the loose ends (10 min).** `git add -A && git commit` the doc updates already sitting in your working tree, so Day 1 starts from a clean slate.
+2. **Build the openFDA client (1.5 h).** `openfda/client.py`: one function, e.g. `get(endpoint, search, limit, count=None)`. Uses the API key, a timeout, builds the query string. Turns failures into clear errors: `NotFound` (openFDA's 404 for zero matches), `RateLimited` (429), `UpstreamError` (5xx/timeout).
+3. **Record fixtures (20 min).** Call it live once for drug recalls, for one drug from `docs/CORPUS.md`. Save the raw response to `tests/fixtures/drug_enforcement_<drug>.json`. Save one "no results" response too.
+4. **Build `check_drug_recalls` logic (2 h).** `tools/drug_recalls.py` — plain function, no MCP. Input: product, optional manufacturer, optional lot number. Output: the shared envelope (`results`, `match_count`, `source`, `data_last_updated`, `data_limitations`, `disclaimer`). Ambiguous match with no manufacturer given → return a `needs_clarification` result (D22), not a guess.
+5. **Tests (included above, not separate time).** `tests/test_drug_recalls.py` against fixtures only, no network: recall found, no recall found, lot match, ambiguous case.
 
-### Step 7 — `check_food_recalls` (1 h)
-- Same endpoint shape as drug recalls (`/food/enforcement`). Reuse your Step 4 helpers. If you're copy-pasting a lot, pull shared bits into a helper, but only now that you've seen the duplication twice.
-- **Done when:** tests green, and the tool works in Claude Desktop.
-
-### Step 8 — `check_drug_shortage` (1.5 h)
-- Research first (15 min): look at `/drug/shortages` and `/drug/drugsfda` records for 2 drugs in `CORPUS.md`. Figure out how to match a shortage to equivalents via `te_code` (e.g. `AB` = FDA-rated equivalent).
-- Build: shortage status + availability + equivalents. Caveats: national, not local; equivalents are "options to ask your pharmacist about".
-- **Done when:** tests green; one shortage case and one no-shortage case verified.
-
-### Step 9 — `get_side_effect_reports` (1.5 h)
-- Uses `count=patient.reaction.reactionmeddrapt.exact` on `/drug/event`. Optional `symptom` filter.
-- This is the tool most likely to mislead (D16). Output must include `not_a_rate: true` and the limits: no denominator, popularity/news bias, not proof of cause.
-- **Test:** a test that *fails* if the caveats are missing.
-- **Done when:** tests green; in Claude Desktop, check whether Claude still says "common side effect". Note it if it does.
-
-### Step 10 — `get_cosmetic_reports` (1 h)
-- `/cosmetic/event`, searched by brand/product name only (D19). Return top reactions and outcomes, with the same caveats as side effects plus "no ingredient-level data".
-- **Done when:** tests green, and the tool works in Claude Desktop.
-
-### Step 11 — Add a cache (1 h)
-- An in-process TTL cache inside the openFDA client: the same query within N minutes doesn't hit openFDA again. Use short TTLs for recalls and shortages.
-- **Test:** call twice, and assert the second call made no network request.
-- **Done when:** tests green. (Redis comes later, only if we run multiple copies.)
-- **End of Day 2:** commit, plus a learning-log entry. You now have a complete local product.
+**Done when:** `uv run pytest` is green with zero network calls.
 
 ---
 
-## Day 3 — Prove it works, then put it online
+## Day 2 — First tool live in Claude Desktop
+Goal: you ask Claude Desktop a real question and your code answers it.
 
-### Step 12 — Small eval harness (2.5 h)
-- Write 20 golden queries in `eval/golden.yaml`, starting from your Day 1–2 notes. Cover every tool, a few ambiguous cases (should ask), and a few side-effect questions (must keep caveats).
-- `eval/run.py`: a scripted MCP client that sends each query through an LLM connected to your server and records which tool was called, with what inputs, and the final answer. Score:
-  - tool selection
-  - parameters
-  - asks-when-ambiguous
-  - caveats kept (a simple keyword check first; LLM-as-judge later)
-- **Done when:** one command prints a score table. **Fix the worst failure** (usually a tool description), re-run, and write down the before/after numbers. That before/after is your best interview story.
+1. **Wrap as an MCP server (1 h).** `server/main.py`: official SDK, **stdio**, one tool (`check_drug_recalls`) calling your Day 1 function. Write a clear tool description — the LLM picks tools by reading it.
+2. **Elicitation branch (30 min, D22).** For the ambiguous-firm case: check whether the connected client declared the elicitation capability during the handshake. If yes, call real `ctx.elicit(...)`. If no, return the `needs_clarification` field from Day 1's function as-is. Don't hardcode either path — branch on what the client actually declared.
+3. **Smoke-test with the Inspector (20 min).** `npx @modelcontextprotocol/inspector`, call the tool by hand, confirm the envelope comes back, and confirm which elicitation branch the Inspector takes (it's a reference client, so it likely supports elicitation — good sanity check that your `elicit()` call itself works before trusting it with Claude Desktop).
+4. **Connect to Claude Desktop (30 min).** Add the server to its config. Ask: "Is Tylenol recalled?", an ambiguous one, a junk product. **This is also your real answer to "does Claude Desktop support elicitation" — trust what you observe here, not a search result.** Note which branch it took in `DECISIONS.md` under D22 as a one-line postscript.
+5. **Write down every miss** (wrong tool, misread output, dropped caveat) — these become your mini-eval set on Day 5.
+6. **Commit + one `LEARNING_LOG.md` entry.**
 
-### Step 13 — Switch to HTTP (1 h)
-- Run the same server over **Streamable HTTP** locally. Keep the server stateless (no per-user data in memory).
-- **Test:** the Inspector connects over HTTP, and all five tools work.
-- **Done when:** the HTTP server works locally.
-
-### Step 14 — Research + deploy (1.5 h)
-- Research (20 min): pick a free host that runs a Docker container over HTTPS (e.g. Fly.io, Render, Google Cloud Run). Record the choice in `DECISIONS.md`.
-- Write a `Dockerfile`, deploy, and set the openFDA key as a secret.
-- **Done when:** Claude Desktop (or the Inspector) connects to the public URL and calls a tool.
-- ⚠️ Until auth is added, keep the URL private or use a simple shared secret, so strangers can't burn your openFDA budget.
-
-### Step 15 — README + demo (1 h)
-- README: who it's for, the 5 tools, an example conversation, the design principles (live data, facts + limits, elicitation), eval scores, and "Roots: skipped, and why".
-- Record a short GIF/video of Claude Desktop using it.
-- **Done when:** a stranger could understand and try it from the README alone.
+**Done when:** Claude answers a real recall question using your server.
 
 ---
 
-## After day 3 — Scale & ops backlog (in priority order)
-Pick these up one at a time; each is independent.
-1. **OAuth** via WorkOS AuthKit or Auth0 (D20) + per-user rate limits + privacy-safe access logs.
-2. Retries with backoff + circuit breaker in the openFDA client.
-3. Upstream rate budget across all users (D17).
-4. Structured logs + metrics + tracing (OpenTelemetry).
-5. Eval harness in GitHub Actions; grow golden set to 40–60; LLM-as-judge for caveats.
-6. Multiple instances behind a load balancer + Redis cache.
-7. Stretch: medication watchlist with new-recall alerts; more beauty-domain tools.
+## Day 3 — Tools 2 and 3: food recalls + drug shortage
+Same shape as Day 1–2, twice. These two don't depend on each other — do them in either order.
+
+1. **`check_food_recalls` (1 h).** Same endpoint shape as drug recalls (`/food/enforcement`). Reuse Day 1's helpers; only pull out shared code once you've seen the duplication twice.
+2. **`check_drug_shortage` (1.5 h).** Look at `/drug/shortages` and `/drug/drugsfda` for 2 drugs from `CORPUS.md`; match a shortage to FDA-rated equivalents via `te_code` (e.g. `AB`). Caveats: national, not local; equivalents are "ask your pharmacist," not a substitution order.
+3. **Register both in `server/main.py`, verify in Claude Desktop.**
+4. **Commit.**
+
+**Done when:** tests green for both; both answer real questions in Claude Desktop.
+
+---
+
+## Day 4 — Tools 4 and 5: side-effect reports + cosmetic reports
+Same pattern again. This is the riskiest pair for over-claiming, so the caveats matter more than the plumbing.
+
+1. **`get_side_effect_reports` (1.5 h).** `count=patient.reaction.reactionmeddrapt.exact` on `/drug/event`. Optional `symptom` filter. Must carry `not_a_rate: true` plus the limits (no denominator, popularity/news bias, not proof of cause). **Write a test that fails if the caveats are missing** — not optional.
+2. **`get_cosmetic_reports` (1 h).** `/cosmetic/event`, searched by brand/product only (D19, no ingredient data). Same caveat set plus "no ingredient-level data."
+3. **Register both, verify in Claude Desktop.** Specifically check: does Claude still say "common side effect" despite the caveat? Note it either way.
+4. **Commit + `LEARNING_LOG.md` entry.**
+
+**Done when:** tests green for both; all **five** tools now work locally. This is the core deliverable — if the week ran out here, you'd already have a complete, demoable project.
+
+---
+
+## Day 5 — Cache, a small eval, polish
+Goal: tie it off, don't open new scope.
+
+1. **In-process TTL cache (1 h, cut first if behind).** Same query within N minutes skips the network call. Short TTL for recalls/shortages. Test: call twice, assert the second made no request.
+2. **Mini eval, run by hand (1.5 h, cut second if behind).** Not the 40–60-query CI harness from the old brief — just 10–15 queries in a YAML/script, covering all five tools plus your Day 2 miss-notes, scored by eye: right tool? right params? asked when ambiguous? caveats kept? Write down the score once. This is your before/after interview story, done cheaply.
+3. **README + a short demo clip (1 h).** Who it's for, the 5 tools, one example conversation, "Roots: skipped, and why," your eval score.
+4. **Commit.**
+
+**Done when:** a stranger could read the README and understand (even if they can't run) the project.
+
+---
+
+## Day 6 — Buffer (use it, don't plan for it)
+This day only exists because 5 tight days rarely survive contact with reality. If you're on schedule, use it for:
+- Whatever slipped from Days 1–5 (most likely: the cache, or the mini eval).
+- If genuinely ahead: switch the server to **Streamable HTTP** locally and confirm the Inspector still connects. That's it — no deploy, no auth, stop there.
+
+If you're not ahead, just stop at Day 5's finish line. A working 5-tool local MCP server with tests is the deliverable, full stop.
+
+---
+
+## Explicitly out of scope for this sprint (real backlog, not a cut corner)
+This is everything from Phase 5 of `docs/PROJECT_BRIEF.md`. It's legitimate follow-on work, and it's exactly where "scale and production" talking points come from for an interview — just not this week's job.
+1. Deploy over HTTPS (pick a free Docker host, record the choice in `DECISIONS.md`).
+2. OAuth via WorkOS AuthKit or Auth0 (D20) + per-user rate limits + privacy-safe access logs.
+3. Retries with backoff + circuit breaker in the openFDA client.
+4. Upstream rate budget across all users (D17).
+5. Structured logs + metrics + tracing (OpenTelemetry).
+6. Grow the eval set to 40–60 queries, move it into GitHub Actions, add LLM-as-judge for caveats.
+7. Multiple instances behind a load balancer + Redis cache.
+8. Stretch: medication watchlist with new-recall alerts; more beauty-domain tools.
 
 ## Known risks to watch
-- **Elicitation client support** (Step 2): if missing, use the fallback. Don't block on it.
-- **openFDA matching is messy** (brand vs. generic names, lot numbers in free text). Expect most of your debugging here; that's the real learning.
-- **3 days is tight.** If behind schedule, cut in this order: cosmetic tool → cache → deploy. Never cut tests or the eval.
+- **openFDA matching is messy** (brand vs. generic names, lot numbers buried in free text). Expect most debugging time here — that's the real learning, budget for it.
+- **Elicitation is already decided** (D22: fallback field, not native) — don't re-open that question mid-week.
+- **5 days is still tight against finals coming up.** If behind, cut in this order: Day 6 stretch → Day 5 cache → Day 5 mini-eval. Never cut a tool's tests.

@@ -113,7 +113,7 @@ src/safecabinet/
   tools/     drug_recalls.py, food_recalls.py, side_effects.py, shortages.py, cosmetics.py
   cache/
   server/    MCP wiring + entry point
-  eval/      golden-set runner
+  evals/     golden-set runner
 tests/
   fixtures/  recorded openFDA responses (D18)
 ```
