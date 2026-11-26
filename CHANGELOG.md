@@ -2,9 +2,13 @@
 
 One line per meaningful change, per docs/CLAUDE.md convention.
 
+## 2026-11-26
+- Built `openfda/client.py` + `errors.py` and `scripts/record_fixtures.py`; recorded drug-enforcement fixtures (tylenol, metformin, atorvastatin, lisinopril).
+- Recorded D24 (proposed): recall query parameters and the "ask only when it changes the result" rule; research deferred to step 4.
+
 ## 2026-11-25
 - Replanned the build around a 5–6 day spring-break sprint; rewrote `plan.md` (D23). Finish line is now "all five tools working locally in Claude Desktop, with tests" — HTTP, OAuth, deploy, and CI eval pushed to an explicit backlog.
-- Decided elicitation goes with the fallback (`needs_clarification` field) by default, skipping the research spike (D22).
+- Decided elicitation strategy (D22): the server checks whether the connected client declares elicitation support; native `elicit()` if yes, `needs_clarification` fallback field if no.
 - Restored `src/safecabinet/__init__.py` (had gone missing from disk; was still git-tracked).
 
 ## 2026-11-01

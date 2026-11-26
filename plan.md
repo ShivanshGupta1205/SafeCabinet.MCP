@@ -15,6 +15,7 @@ Goal: a plain Python function that answers "is this drug recalled?" — provably
 2. **Build the openFDA client (1.5 h).** `openfda/client.py`: one function, e.g. `get(endpoint, search, limit, count=None)`. Uses the API key, a timeout, builds the query string. Turns failures into clear errors: `NotFound` (openFDA's 404 for zero matches), `RateLimited` (429), `UpstreamError` (5xx/timeout).
 3. **Record fixtures (20 min).** Call it live once for drug recalls, for one drug from `docs/CORPUS.md`. Save the raw response to `tests/fixtures/drug_enforcement_<drug>.json`. Save one "no results" response too.
 4. **Build `check_drug_recalls` logic (2 h).** `tools/drug_recalls.py` — plain function, no MCP. Input: product, optional manufacturer, optional lot number. Output: the shared envelope (`results`, `match_count`, `source`, `data_last_updated`, `data_limitations`, `disclaimer`). Ambiguous match with no manufacturer given → return a `needs_clarification` result (D22), not a guess.
+   - **First, 15 min research (D24):** settle which parameters the tool accepts (manufacturer, lot, status, date; location optional) and the "ask only when the answer changes the result" rule. Add the one-firm fixture (e.g. metformin + Teva) for the no-question test. Report the true total as `match_count`, never just the page size.
 5. **Tests (included above, not separate time).** `tests/test_drug_recalls.py` against fixtures only, no network: recall found, no recall found, lot match, ambiguous case.
 
 **Done when:** `uv run pytest` is green with zero network calls.
