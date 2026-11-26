@@ -1,0 +1,170 @@
+{
+    "meta": {
+        "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+        "terms": "https://open.fda.gov/terms/",
+        "license": "https://open.fda.gov/license/",
+        "last_updated": "2026-11-18",
+        "results": {
+            "skip": 0,
+            "limit": 10,
+            "total": 4
+        }
+    },
+    "results": [
+        {
+            "status": "Ongoing",
+            "city": "Minneapolis",
+            "state": "MN",
+            "country": "United States",
+            "classification": "Class II",
+            "openfda": {},
+            "product_type": "Drugs",
+            "event_id": "98239",
+            "recalling_firm": "GOLD STAR DISTRIBUTION INC",
+            "address_1": "1000 Humboldt Ave N",
+            "address_2": "",
+            "postal_code": "55411-3964",
+            "voluntary_mandated": "Voluntary: Firm initiated",
+            "initial_firm_notification": "Two or more of the following: Email, Fax, Letter, Press Release, Telephone, Visit",
+            "distribution_pattern": "US Nationwide.",
+            "recall_number": "D-0277-2026",
+            "product_description": "TYLENOL a) 500 MG., 2'S DISPLAY, 50CT; b) COLD & FLU, 25CT/2S; c) COLD & FLU SEVERE, 2PK, 50CT; d) PM, 50CT; e) SINUS SEVERE, 2PK, 50CT",
+            "product_quantity": "",
+            "reason_for_recall": "CGMP Deviations: Insanitary conditions including rodent exposure/activity in their distribution center.",
+            "recall_initiation_date": "20251226",
+            "center_classification_date": "20260114",
+            "report_date": "20260121",
+            "code_info": "All lots within expiry distributed by Gold Star Distribution.",
+            "more_code_info": ""
+        },
+        {
+            "status": "Terminated",
+            "city": "Dublin",
+            "state": "OH",
+            "country": "United States",
+            "classification": "Class II",
+            "openfda": {},
+            "product_type": "Drugs",
+            "event_id": "87512",
+            "recalling_firm": "Cardinal Health Inc.",
+            "address_1": "7000 Cardinal Pl",
+            "address_2": "N/A",
+            "postal_code": "43017-1091",
+            "voluntary_mandated": "Voluntary: Firm initiated",
+            "initial_firm_notification": "Letter",
+            "distribution_pattern": "FL, GA, SC",
+            "recall_number": "D-0497-2021",
+            "product_description": "Tylenol Acetaminophen Pain Regular Strength Liquid Gels Pain Reliever Fever Reducer 20 Liquid Gels 325 mg each NDC 50580-487-20",
+            "product_quantity": "37 bottles",
+            "reason_for_recall": "CGMP Deviations: Intermittent exposure to temperature excursion during storage.",
+            "recall_initiation_date": "20210315",
+            "center_classification_date": "20210524",
+            "termination_date": "20240617",
+            "report_date": "20210602",
+            "code_info": "All Lots distributed 02/23/2021 through 03/10/2021."
+        },
+        {
+            "status": "Ongoing",
+            "city": "Summitt",
+            "state": "NJ",
+            "country": "United States",
+            "classification": "Class II",
+            "openfda": {
+                "application_number": [
+                    "M013"
+                ],
+                "brand_name": [
+                    "TYLENOL EXTRA STRENGTH"
+                ],
+                "generic_name": [
+                    "ACETAMINOPHEN"
+                ],
+                "manufacturer_name": [
+                    "Kenvue Brands LLC"
+                ],
+                "product_ndc": [
+                    "50580-378"
+                ],
+                "product_type": [
+                    "HUMAN OTC DRUG"
+                ],
+                "route": [
+                    "ORAL"
+                ],
+                "substance_name": [
+                    "ACETAMINOPHEN"
+                ],
+                "rxcui": [
+                    "198440",
+                    "209459"
+                ],
+                "spl_id": [
+                    "48dff3c9-329f-1300-e063-6294a90a47ef"
+                ],
+                "spl_set_id": [
+                    "17cfa99d-abb2-4d77-9e0e-e77109fbb61a"
+                ],
+                "package_ndc": [
+                    "50580-378-01",
+                    "50580-378-02",
+                    "50580-378-03",
+                    "50580-378-04",
+                    "50580-378-05",
+                    "50580-378-06",
+                    "50580-378-07",
+                    "50580-378-08",
+                    "50580-378-37"
+                ],
+                "is_original_packager": [
+                    true
+                ],
+                "unii": [
+                    "362O9ITL9D"
+                ]
+            },
+            "product_type": "Drugs",
+            "event_id": "97850",
+            "recalling_firm": "Kenvue Brands LLC",
+            "address_1": "1 Kenvue Way",
+            "address_2": "N/A",
+            "postal_code": "07901",
+            "voluntary_mandated": "Voluntary: Firm initiated",
+            "initial_firm_notification": "Letter",
+            "distribution_pattern": "U.S. Nationwide - CO, IL, OH and IN.",
+            "recall_number": "D-0121-2026",
+            "product_description": "TYLENOL, Acetaminophen, Extra Strength, 24 Caplets, 500mg each, distributed by: Johnson & Johnson Consumer Inc., McNeil Consumer Healthcare Division, Fort Washington, PA 19034, NDC: 50580-378-04.",
+            "product_quantity": "3,816 bottles",
+            "reason_for_recall": "Defective Container",
+            "recall_initiation_date": "20251021",
+            "center_classification_date": "20251028",
+            "report_date": "20251105",
+            "code_info": "Lot: EJA022, expiry: 04/30/2028"
+        },
+        {
+            "status": "Ongoing",
+            "city": "Chesapeake",
+            "state": "VA",
+            "country": "United States",
+            "classification": "Class II",
+            "openfda": {},
+            "product_type": "Drugs",
+            "event_id": "90566",
+            "recalling_firm": "Family Dollar Stores, Llc.",
+            "address_1": "500 Volvo Pkwy",
+            "address_2": "",
+            "postal_code": "23320-1604",
+            "voluntary_mandated": "Voluntary: Firm initiated",
+            "initial_firm_notification": "Other",
+            "distribution_pattern": "Nationwide within the United States",
+            "recall_number": "D-1372-2022",
+            "product_description": "Ready in case ACETAMINOPHEN PM CAPLETS 24 CT SKU 900559;  TYLENOL CHILD  GRAPE 4 FL OZ SKU 901600  TYLENOL CHILD ORAL SUSPENSION CHERRY 4 FO 913104  TYLENOL INFANTS DROPS DF CHERRY 1OZ SKU 999108   TYLENOL PM CAPLET 24 CT SKU 900603   TYLENOL EXTRA STRENGTH CAPLET 24 CT SKU 916986   TYLENOL 8HR MSL ACHE PAIN RD CAPLET 24 CT SKU 901155   distributed to specific Family Dollar Stores 04/30/2022 through 06/10/2022.",
+            "product_quantity": "Unknown",
+            "reason_for_recall": "CGMP Deviations: product held outside appropriate storage temperature conditions.",
+            "recall_initiation_date": "20220623",
+            "center_classification_date": "20220822",
+            "report_date": "20220831",
+            "code_info": "SKUs:900559; 901600; 913104; 999108; 900603; 916986; 901155",
+            "more_code_info": ""
+        }
+    ]
+}

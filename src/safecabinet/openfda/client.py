@@ -50,6 +50,3 @@ def get(endpoint: str, search: str, limit:  int = 5, count: str | None = None) -
 
     response.raise_for_status()
     return response.json()
-    
-
-
