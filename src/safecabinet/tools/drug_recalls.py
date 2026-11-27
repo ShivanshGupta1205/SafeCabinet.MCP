@@ -6,9 +6,9 @@ from safecabinet.openfda.errors import NotFoundError
 SOURCE = "openFDA /drug/enforcement"
 FETCH_LIMIT = 100
 MAX_RESULTS = 10
-MAX_OPTIONS = 8  # most firms shown in the manufacturer question
-COUNT_LIMIT = 1000  # openFDA's max for count requests
-ANY_MANUFACTURER = "Any manufacturer"  # extra picker option; server/main.py maps it to all_manufacturers=True
+MAX_OPTIONS = 8
+COUNT_LIMIT = 1000
+ANY_MANUFACTURER = "Any manufacturer" 
 RECENT_DAYS = 183
 STATUS_RANK = {"Ongoing": 0, "Completed": 1, "Terminated": 2}
 FIRM_SUFFIXES = {"inc", "llc", "ltd", "limited", "corp", "corporation", "co", "company", "lp", "plc"}
@@ -46,16 +46,15 @@ def new_envelope(
 
 
 def build_search(product: str, manufacturer: str | None, include_past: bool) -> str:
-    # Clause list (D26): each input adds one piece only if set, then join with " AND ".
     clauses = []
     if product:
         clauses.append(f'product_description:"{product}"')
     if manufacturer:
         clauses.append(f'recalling_firm:"{manufacturer}"')
     if not include_past:
-        # Old recalls can still be Ongoing, so a date window alone would hide active ones.
         start = (date.today() - timedelta(days=RECENT_DAYS)).strftime("%Y%m%d")
         end = date.today().strftime("%Y%m%d")
+        # Old recalls can still be Ongoing, so a date window alone would hide active ones.
         clauses.append(f'(status:"Ongoing" OR recall_initiation_date:[{start} TO {end}])')
     return " AND ".join(clauses)
 
@@ -66,11 +65,6 @@ def normalize_firm(name: str) -> str:
 
 
 def firm_counts(terms: list[dict]) -> list[tuple[str, int]]:
-    """Merge openFDA count terms that are the same firm, most recalls first.
-
-    Input: openFDA `count=recalling_firm.exact` results, e.g. [{"term": "Teva Inc", "count": 3}, ...].
-    Output: [(name as first written, total count), ...]. Pure function: no network, easy to test.
-    """
     names: dict[str, str] = {}  # normalized -> name as written
     totals: dict[str, int] = {}  # normalized -> summed count
     for t in terms:
@@ -124,7 +118,7 @@ def check_drug_recalls(
     manufacturer: str | None = None,
     lot_number: str | None = None,
     include_past: bool = False,
-    all_manufacturers: bool = False,  # new inputs go last, so existing positional calls keep working
+    all_manufacturers: bool = False, 
 ) -> dict:
     """Look up FDA drug recalls for a product. By default only active or recent recalls."""
     result = new_envelope(product, manufacturer, lot_number, include_past, all_manufacturers)

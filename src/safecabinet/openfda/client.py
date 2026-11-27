@@ -1,6 +1,7 @@
+
 import httpx
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 from .errors import NotFoundError, RateLimitExceededError, UpstreamError
 load_dotenv()
 
