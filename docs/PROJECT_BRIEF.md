@@ -46,7 +46,7 @@ Known data limits the tools must surface (D16):
 
 ## The five tools
 ```python
-check_drug_recalls(product: str, manufacturer: str | None = None, lot_number: str | None = None)
+check_drug_recalls(product: str, manufacturer: str | None = None, lot_number: str | None = None, include_past: bool = False)  # D24
 check_food_recalls(brand: str, product: str | None = None, lot_number: str | None = None)
 get_side_effect_reports(drug: str, symptom: str | None = None, top_k: int = 10)
 check_drug_shortage(drug: str)                     # includes FDA-rated equivalents via te_code

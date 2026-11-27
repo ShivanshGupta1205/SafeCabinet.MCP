@@ -4,6 +4,8 @@ One line per meaningful change, per docs/CLAUDE.md convention.
 
 ## 2026-11-26
 - Built `openfda/client.py` + `errors.py` and `scripts/record_fixtures.py`; recorded drug-enforcement fixtures (tylenol, metformin, atorvastatin, lisinopril).
+- Built `tools/drug_recalls.py` (`check_drug_recalls`): default "Ongoing or last 6 months" filter, `include_past` flag, max 10 results, manufacturer question with merged firm names (D24 update).
+- Renamed the Teva fixture to `drug_enforcement_metformin_teva.json`; fixture script now writes lowercase names without spaces.
 - Recorded D24 (proposed): recall query parameters and the "ask only when it changes the result" rule; research deferred to step 4.
 
 ## 2026-11-25
