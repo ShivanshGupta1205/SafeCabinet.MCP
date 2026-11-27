@@ -1,0 +1,282 @@
+{
+  "meta": {
+    "disclaimer": "Do not rely on openFDA to make decisions regarding medical care. While we make every effort to ensure that data is accurate, you should assume all results are unvalidated. We may limit or otherwise restrict your access to the API in line with our Terms of Service.",
+    "terms": "https://open.fda.gov/terms/",
+    "license": "https://open.fda.gov/license/",
+    "last_updated": "2026-11-18"
+  },
+  "results": [
+    {
+      "term": "Ultra Seal Corporation",
+      "count": 44
+    },
+    {
+      "term": "Novartis Consumer Health",
+      "count": 24
+    },
+    {
+      "term": "Perrigo Company PLC",
+      "count": 24
+    },
+    {
+      "term": "ULTRAtab Laboratories, Inc.",
+      "count": 21
+    },
+    {
+      "term": "Akron Pharma, Inc.",
+      "count": 6
+    },
+    {
+      "term": "Aidapak Services, LLC",
+      "count": 5
+    },
+    {
+      "term": "Aurobindo Pharma USA Inc",
+      "count": 5
+    },
+    {
+      "term": "Aurobindo Pharma USA Inc.",
+      "count": 5
+    },
+    {
+      "term": "L. Perrigo Co.",
+      "count": 5
+    },
+    {
+      "term": "Plastikon Healthcare LLC",
+      "count": 5
+    },
+    {
+      "term": "Qualitest Pharmaceuticals",
+      "count": 5
+    },
+    {
+      "term": "Watson Laboratories Inc",
+      "count": 5
+    },
+    {
+      "term": "LNK International, Inc.",
+      "count": 4
+    },
+    {
+      "term": "Contract Pharmacal Corporation",
+      "count": 3
+    },
+    {
+      "term": "H J Harkins Company Inc dba Pharma Pac",
+      "count": 3
+    },
+    {
+      "term": "Medique Products",
+      "count": 3
+    },
+    {
+      "term": "Precision Dose Inc.",
+      "count": 3
+    },
+    {
+      "term": "RIJ Pharmaceutical LLC",
+      "count": 3
+    },
+    {
+      "term": "Reckitt Benckiser LLC",
+      "count": 3
+    },
+    {
+      "term": "Torrent Pharma Inc",
+      "count": 3
+    },
+    {
+      "term": "VistaPharm, Inc.",
+      "count": 3
+    },
+    {
+      "term": "A-S Medication Solutions LLC.",
+      "count": 2
+    },
+    {
+      "term": "Ascent Pharmaceuticals, Inc.",
+      "count": 2
+    },
+    {
+      "term": "Baxter Healthcare Corporation",
+      "count": 2
+    },
+    {
+      "term": "Bayer Healthcare, LLC",
+      "count": 2
+    },
+    {
+      "term": "Family Dollar Stores, Llc.",
+      "count": 2
+    },
+    {
+      "term": "Global Corporation",
+      "count": 2
+    },
+    {
+      "term": "Haleon US Holdings LLC",
+      "count": 2
+    },
+    {
+      "term": "KINDER FARMS LLC",
+      "count": 2
+    },
+    {
+      "term": "Mallinckrodt Inc.",
+      "count": 2
+    },
+    {
+      "term": "Medline Industries Inc",
+      "count": 2
+    },
+    {
+      "term": "Prescript Pharmaceuticals, Inc.",
+      "count": 2
+    },
+    {
+      "term": "Procter & Gamble Co",
+      "count": 2
+    },
+    {
+      "term": "SpecGx, LLC",
+      "count": 2
+    },
+    {
+      "term": "Unipharma, Llc.",
+      "count": 2
+    },
+    {
+      "term": "Vintage Pharmaceuticals LLC DBA Qualitest Pharmaceuticals",
+      "count": 2
+    },
+    {
+      "term": "A-S Medication Solutions LLC",
+      "count": 1
+    },
+    {
+      "term": "ALLERGAN",
+      "count": 1
+    },
+    {
+      "term": "Advanced Pharma Inc.",
+      "count": 1
+    },
+    {
+      "term": "Aero Healthcare",
+      "count": 1
+    },
+    {
+      "term": "Akorn, Inc.",
+      "count": 1
+    },
+    {
+      "term": "Alvogen, Inc",
+      "count": 1
+    },
+    {
+      "term": "AuroMedics Pharma LLC",
+      "count": 1
+    },
+    {
+      "term": "Axcentria Pharmaceuticals LLC",
+      "count": 1
+    },
+    {
+      "term": "Bio-pharm, Inc.",
+      "count": 1
+    },
+    {
+      "term": "Cadence Pharmaceuticals",
+      "count": 1
+    },
+    {
+      "term": "Cardinal Health Inc.",
+      "count": 1
+    },
+    {
+      "term": "Centurion Labs, LLC",
+      "count": 1
+    },
+    {
+      "term": "Endo Pharmaceuticals, Inc.",
+      "count": 1
+    },
+    {
+      "term": "GlaxoSmithkline Consmer Healthcare",
+      "count": 1
+    },
+    {
+      "term": "Glenmark Pharmaceuticals Inc., USA",
+      "count": 1
+    },
+    {
+      "term": "Granules Consumer Health Inc.",
+      "count": 1
+    },
+    {
+      "term": "Hikma Pharmaceuticals USA Inc.",
+      "count": 1
+    },
+    {
+      "term": "KVK-Tech, Inc.",
+      "count": 1
+    },
+    {
+      "term": "Kenvue Brands LLC",
+      "count": 1
+    },
+    {
+      "term": "LUPIN SOMERSET",
+      "count": 1
+    },
+    {
+      "term": "Marlex Pharmaceuticals, Inc.",
+      "count": 1
+    },
+    {
+      "term": "Mayne Pharma Inc",
+      "count": 1
+    },
+    {
+      "term": "Medtech Products, Inc.",
+      "count": 1
+    },
+    {
+      "term": "Midway Importing, Inc",
+      "count": 1
+    },
+    {
+      "term": "Mylan Institutional, Inc. (d.b.a. UDL Laboratories)",
+      "count": 1
+    },
+    {
+      "term": "OPMX, LLC",
+      "count": 1
+    },
+    {
+      "term": "P&L Developments, LLC",
+      "count": 1
+    },
+    {
+      "term": "Pharmatech LLC",
+      "count": 1
+    },
+    {
+      "term": "Prodose, Inc.",
+      "count": 1
+    },
+    {
+      "term": "Reliable Rexall-A Compounding Pharmacy",
+      "count": 1
+    },
+    {
+      "term": "Safecor Health, LLC",
+      "count": 1
+    },
+    {
+      "term": "Spirit Pharmaceuticals",
+      "count": 1
+    }
+  ]
+}

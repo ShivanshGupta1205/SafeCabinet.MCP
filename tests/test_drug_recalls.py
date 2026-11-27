@@ -13,20 +13,33 @@ def load_fixture(name: str) -> dict:
         return json.loads(f.read())
 
 
-def fake_get_returning(name: str):
-    return lambda *args, **kwargs: load_fixture(name)
+def fake_get_returning(name: str, count_name: str | None = None, calls: list | None = None):
+    """Fake openFDA: count requests get the count fixture, record searches get the records fixture.
+
+    Pass a list as `calls` to record each request's `count` value (None for a record search).
+    """
+    def fake_get(*args, **kwargs):
+        if calls is not None:
+            calls.append(kwargs.get("count"))
+        if kwargs.get("count"):
+            return load_fixture(count_name or f"{name}_count")
+        return load_fixture(name)
+    return fake_get
 
 
 def test_several_manufacturers_ask_which_one(monkeypatch):
-    # Arrange: fake openFDA returns the Tylenol fixture (4 different firms)
+    # Arrange: fake openFDA count returns 4 different Tylenol firms
     monkeypatch.setattr(drug_recalls, "get", fake_get_returning("tylenol"))
 
     # Act: call check_drug_recalls with no manufacturer
     result = drug_recalls.check_drug_recalls("tylenol")
 
-    # Assert: it asks which manufacturer to use
-    assert result["needs_clarification"] is not None
-    assert len(result["needs_clarification"]["options"]) == 4
+    # Assert: it asks which manufacturer to use (4 firms + "Any manufacturer")
+    question = result["needs_clarification"]
+    assert question is not None
+    assert len(question["options"]) == 5
+    assert question["options"][-1] == drug_recalls.ANY_MANUFACTURER
+    assert question["total_manufacturers"] == 4
     assert result["results"] == []
     assert result["match_count"] == 4
 
@@ -92,10 +105,68 @@ def test_default_filter():
 def test_every_answer_carries_its_limits(monkeypatch):
     # D16: whatever path the tool takes, caveats and disclaimer must be present
     for fixture, manufacturer in [("tylenol", None), ("metformin_teva", "Teva")]:
-        monkeypatch.setattr(drug_recalls, "get", fake_get_returning(fixture))
+        monkeypatch.setattr(drug_recalls, "get", fake_get_returning(fixture, count_name="tylenol_count"))
 
         result = drug_recalls.check_drug_recalls("any product", manufacturer=manufacturer)
 
         assert isinstance(result["data_limitations"], list)
         assert len(result["data_limitations"]) > 0
         assert result["disclaimer"]
+
+
+def test_many_firms_capped_and_ranked(monkeypatch):
+    # Arrange: acetaminophen has far more firms than we want to show
+    monkeypatch.setattr(drug_recalls, "get", fake_get_returning("tylenol", count_name="acetaminophen_count"))
+
+    # Act
+    result = drug_recalls.check_drug_recalls("acetaminophen")
+
+    # Assert: top MAX_OPTIONS firms + "Any manufacturer", ranked by recall count, real total reported
+    question = result["needs_clarification"]
+    assert len(question["options"]) == drug_recalls.MAX_OPTIONS + 1
+    assert question["total_manufacturers"] > drug_recalls.MAX_OPTIONS
+    assert question["options"][0] == "Ultra Seal Corporation"  # 44 recalls, the most in the fixture
+    assert "If yours isn't listed" in question["question"]
+
+
+def test_all_manufacturers_skips_question(monkeypatch):
+    # Arrange: record which requests the tool makes
+    calls = []
+    monkeypatch.setattr(drug_recalls, "get", fake_get_returning("tylenol", calls=calls))
+
+    # Act: the user said "any brand"
+    result = drug_recalls.check_drug_recalls("tylenol", all_manufacturers=True)
+
+    # Assert: no question, real results, and the count request was never made
+    assert result["needs_clarification"] is None
+    assert len(result["results"]) > 0
+    assert calls == [None]
+    assert result["query"]["all_manufacturers"] is True
+
+
+def test_scope_line_present(monkeypatch):
+    # The store/pharmacy limit must reach the user on every answer, even "nothing found"
+    def fake_get(*args, **kwargs):
+        raise NotFoundError("no matches")
+
+    monkeypatch.setattr(drug_recalls, "get", fake_get)
+
+    result = drug_recalls.check_drug_recalls("anything")
+
+    assert any("stores or pharmacies" in line for line in result["data_limitations"])
+
+
+def test_firm_counts_merges_same_firm():
+    # Pure function: no fake needed
+    terms = [
+        {"term": "Teva Inc", "count": 3},
+        {"term": "Pfizer", "count": 4},
+        {"term": "TEVA", "count": 2},
+    ]
+
+    assert drug_recalls.firm_counts(terms) == [("Teva Inc", 5), ("Pfizer", 4)]
+
+
+def test_build_search_without_product():
+    # Clause list (D26): no dangling " AND " when a piece is missing
+    assert drug_recalls.build_search("", "Teva", include_past=True) == 'recalling_firm:"Teva"'
