@@ -8,7 +8,7 @@ Code-first, same as before: **you write the code, then hand it to Claude for rev
 
 ---
 
-## Day 1 — openFDA client + first tool's logic (no MCP yet)
+## Day 1 — openFDA client + first tool's logic (no MCP yet) ✅ done 2026-11-26
 Goal: a plain Python function that answers "is this drug recalled?" — provably, with tests, no network at test time.
 
 1. **Commit the loose ends (10 min).** `git add -A && git commit` the doc updates already sitting in your working tree, so Day 1 starts from a clean slate.

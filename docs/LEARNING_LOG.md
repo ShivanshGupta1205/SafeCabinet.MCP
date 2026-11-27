@@ -35,4 +35,10 @@ After building a meaningful piece, add an entry:
 - **Tripped me up:** First attempt put `openfda/`, `server/`, `tools/` directly under `src/` (with `src/__init__.py`), so `import safecabinet` failed. Fixed by nesting under `src/safecabinet/`. Check: `uv run python -c "import safecabinet.openfda, safecabinet.tools, safecabinet.server"`.
 - **Could explain in an interview?** yes
 
-<!-- next entry: Day 1 — openFDA client + check_drug_recalls logic, tests green -->
+### 2026-11-26 — Day 1: openFDA client, `check_drug_recalls`, tests, CI
+- **Built:** `openfda/client.py` + `errors.py` (one `get()`, typed errors), `scripts/record_fixtures.py` + 5 fixtures, `tools/drug_recalls.py`, `tests/test_drug_recalls.py` (6 tests, no network), GitHub Actions running pytest on every push.
+- **Concept it taught:** Custom exceptions turn one API's status codes into outcomes the app understands. Tests fake only the *input* (`monkeypatch` swaps `get`, patched where it's used, not where it's defined) and check the logic that runs on it. Small pure functions (`sort_results`, `build_search`) need no fakes at all. CI runs on a fresh Linux machine, so it catches things your laptop hides.
+- **Tripped me up:** Sending the API key as a `Bearer` header (openFDA silently ignored it, calls were anonymous). `+AND+` in a search breaks through httpx (`+` becomes `%2B`), use spaces. A module-level result dict leaked one call's answer into the next. A 6-month date filter hid 21 of 22 active recalls. A test on empty results that could never fail. `"Tylenol"` vs `tylenol.json` works on macOS but fails on Linux.
+- **Could explain in an interview?** yes
+
+<!-- next entry: Day 2 — MCP server over stdio, Claude Desktop -->
