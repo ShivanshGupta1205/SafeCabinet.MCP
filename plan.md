@@ -24,7 +24,7 @@ Goal: a plain Python function that answers "is this drug recalled?" — provably
 
 ---
 
-## Day 2 — First tool live in Claude Desktop
+## Day 2 — First tool live in Claude Desktop ✅ done 2026-11-27
 Goal: you ask Claude Desktop a real question and your code answers it.
 
 1. **Wrap as an MCP server (1 h).** `server/main.py`: Prefect's FastMCP (D25), **stdio**, one tool (`check_drug_recalls`) calling your Day 1 function. Write a clear tool description — the LLM picks tools by reading it.
@@ -36,6 +36,8 @@ Goal: you ask Claude Desktop a real question and your code answers it.
 6. **Commit + one `LEARNING_LOG.md` entry.**
 
 **Done when:** Claude answers a real recall question using your server.
+
+**Result:** working in Claude Desktop. It connects on the older protocol and takes branch A (no picker). 7-prompt run saved in `docs/eval_notes/2026-11-27_claude_desktop_drug_recalls.md`; its one serious issue (severity ignored in sorting) is fixed. Still open: branch C untested on a real client; a stderr log of the branch taken (Day 5).
 
 ---
 

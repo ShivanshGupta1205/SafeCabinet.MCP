@@ -3,6 +3,10 @@
 One line per meaningful change, per docs/CLAUDE.md convention.
 
 ## 2026-11-27
+- `sort_results` now ranks by status, then classification (Class I first), then date, so an older Class I recall can't be cut by the 10-result cap; 2 new tests (13 total).
+- First Claude Desktop run of `check_drug_recalls` (7 prompts): answers and scorecard saved in `docs/eval_notes/`; D22 postscript records that Claude Desktop uses the older protocol and takes the no-elicitation fallback.
+- `server/main.py`: `all_manufacturers` input, "Any manufacturer" pick handling, LLM-facing tool description.
+- Day 2 done.
 - Wrote `server/main.py` elicitation branches A/B/C (FastMCP); tested A and B in memory.
 - Refined the manufacturer question (D24 update): `all_manufacturers` input, firm list from openFDA `count`, picker capped at 8 + "Any manufacturer", store/pharmacy scope line. Recorded D26 (product-first now, other primary keys in backlog). Updated plan and brief.
 

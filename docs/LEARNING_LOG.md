@@ -41,4 +41,10 @@ After building a meaningful piece, add an entry:
 - **Tripped me up:** Sending the API key as a `Bearer` header (openFDA silently ignored it, calls were anonymous). `+AND+` in a search breaks through httpx (`+` becomes `%2B`), use spaces. A module-level result dict leaked one call's answer into the next. A 6-month date filter hid 21 of 22 active recalls. A test on empty results that could never fail. `"Tylenol"` vs `tylenol.json` works on macOS but fails on Linux.
 - **Could explain in an interview?** yes
 
-<!-- next entry: Day 2 — MCP server over stdio, Claude Desktop -->
+### 2026-11-27 — Day 2: `check_drug_recalls` live in Claude Desktop (FastMCP)
+- **Built:** `server/main.py` with Prefect's FastMCP over stdio: one tool wrapping the Day 1 function, three elicitation branches (A: client can't ask → `needs_clarification`; B: new protocol → return `InputRequiredResult`, answer arrives on the retry; C: older protocol → `await ctx.elicit`). Reworked the manufacturer question: firm list from openFDA `count`, top 8 + "Any manufacturer", `all_manufacturers` input, store/pharmacy scope line, severity-aware sorting. Connected to Claude Desktop and ran 7 real prompts.
+- **Concept it taught:** An MCP server is a wrapper; the logic stays in plain functions. The **docstring is the interface** the LLM reads to pick inputs. Asking the user mid-call depends on both the client's declared *capability* and its *protocol version*. Each user question is a separate, stateless tool call. Test from the real data: `count` found 66 acetaminophen firms where our 100-record sample saw 38.
+- **Tripped me up:** v1 tutorials (`FastMCP` vs the SDK's `MCPServer`, then Prefect's `fastmcp`). `ctx.elicit()` fails on the 2026-07-28 protocol. Adding a parameter in the middle of a signature silently breaks positional callers. Storing `bool` (the type) instead of the value. Claude Desktop never showed a picker (older protocol, no elicitation). A safety tool that sorted by date could hide the most dangerous recall.
+- **Could explain in an interview?** yes
+
+<!-- next entry: Day 3 — food recalls + drug shortage -->

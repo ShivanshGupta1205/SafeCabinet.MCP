@@ -77,22 +77,51 @@ def test_not_found_never_says_safe(monkeypatch):
 def test_sorting():
     # Arrange: handmade records, deliberately out of order
     records = [
-        {"status": "Terminated", "recall_initiation_date": "20240101"},
-        {"status": "Ongoing", "recall_initiation_date": "20200101"},
-        {"status": "Ongoing", "recall_initiation_date": "20250101"},
-        {"status": "Completed", "recall_initiation_date": "20260101"},
+        {"status": "Terminated", "classification": "Class I", "recall_initiation_date": "20240101"},
+        {"status": "Ongoing", "classification": "Class II", "recall_initiation_date": "20200101"},
+        {"status": "Ongoing", "classification": "Class II", "recall_initiation_date": "20250101"},
+        {"status": "Completed", "classification": "Class II", "recall_initiation_date": "20260101"},
     ]
 
     # Act
     ordered = drug_recalls.sort_results(records)
 
-    # Assert: Ongoing (newest first), then Completed, then Terminated
+    # Assert: Ongoing (newest first), then Completed, then Terminated.
+    # Status beats class: a Terminated Class I still comes after anything active.
     assert [(r["status"], r["recall_initiation_date"]) for r in ordered] == [
         ("Ongoing", "20250101"),
         ("Ongoing", "20200101"),
         ("Completed", "20260101"),
         ("Terminated", "20240101"),
     ]
+
+
+def test_class_one_beats_newer_milder_recalls():
+    # Issue 1 from the 2026-11-27 Claude Desktop run: an older Class I must not be cut by the 10-result cap.
+    records = [
+        {"status": "Ongoing", "classification": "Class III", "recall_initiation_date": "20260901"},
+        {"status": "Ongoing", "classification": "Class II", "recall_initiation_date": "20260801"},
+        {"status": "Ongoing", "classification": "Class I", "recall_initiation_date": "20210101"},
+    ]
+
+    ordered = drug_recalls.sort_results(records)
+
+    assert [r["classification"] for r in ordered] == ["Class I", "Class II", "Class III"]
+
+
+def test_class_one_survives_the_cap(monkeypatch):
+    # 11 newer Class III recalls + 1 old Class I: the Class I must be in the 10 shown
+    records = [
+        {"status": "Ongoing", "classification": "Class III", "recall_initiation_date": f"202609{day:02d}"}
+        for day in range(1, 12)
+    ] + [{"status": "Ongoing", "classification": "Class I", "recall_initiation_date": "20200101"}]
+    response = {"meta": {"results": {"total": len(records)}, "last_updated": "2026-11-18"}, "results": records}
+    monkeypatch.setattr(drug_recalls, "get", lambda *args, **kwargs: response)
+
+    result = drug_recalls.check_drug_recalls("ibuprofen", all_manufacturers=True)
+
+    assert len(result["results"]) == drug_recalls.MAX_RESULTS
+    assert result["results"][0]["classification"] == "Class I"
 
 
 def test_default_filter():

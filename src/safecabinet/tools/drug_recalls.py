@@ -11,6 +11,7 @@ COUNT_LIMIT = 1000
 ANY_MANUFACTURER = "Any manufacturer" 
 RECENT_DAYS = 183
 STATUS_RANK = {"Ongoing": 0, "Completed": 1, "Terminated": 2}
+CLASS_RANK = {"Class I": 0, "Class II": 1, "Class III": 2}
 FIRM_SUFFIXES = {"inc", "llc", "ltd", "limited", "corp", "corporation", "co", "company", "lp", "plc"}
 
 # ----------------- helper functions -----------------
@@ -91,7 +92,10 @@ def manufacturer_question(firms: list[tuple[str, int]]) -> dict:
 
 def sort_results(results: list[dict]) -> list[dict]:
     newest_first = sorted(results, key=lambda r: r.get("recall_initiation_date") or "", reverse=True)
-    return sorted(newest_first, key=lambda r: STATUS_RANK.get(r.get("status") or "", 3))
+    return sorted(
+        newest_first,
+        key=lambda r: (STATUS_RANK.get(r.get("status") or "", 3), CLASS_RANK.get(r.get("classification") or "", 3)),
+    )
 
 
 def cleaned_results(records: list[dict]) -> list[dict]:
@@ -164,6 +168,6 @@ def check_drug_recalls(
     result["results"] = shown
     if result["match_count"] > len(shown):
         result["data_limitations"].append(
-            f"Showing {len(shown)} of {result['match_count']} matching recalls, active and newest first."
+            f"Showing {len(shown)} of {result['match_count']} matching recalls: active first, then most serious class, then newest."
         )
     return result
