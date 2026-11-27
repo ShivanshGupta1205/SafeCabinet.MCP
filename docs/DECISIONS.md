@@ -159,6 +159,17 @@ Status values: `accepted` (in force), `superseded` (replaced by a later entry), 
   - **Token budget:** fetch up to 100 records (so the manufacturer check sees every firm), return at most 10 after sorting (Ongoing first, then newest), and say "showing X of Y" in `data_limitations`.
   - **Manufacturer question:** asked only when no manufacturer was given and the results contain more than one firm. Firm names are compared after lowercasing and dropping suffixes (`Inc`, `LLC`...), but shown to the user as written. When asking, `results` is empty and `needs_clarification` holds `{question, options}`.
   - **Lots:** not matched in code. `lot_number` is kept in `query`, each result carries the raw `code_info`, and a limitation tells the reader to compare them.
+- **Update 2026-11-27 (manufacturer question, refined before Day 2 build):**
+  - **New input `all_manufacturers: bool = False`.** True skips the manufacturer question and returns recalls from every firm (usual sort, max 10, "showing X of Y"). The LLM sets it when the user says "any brand / any manufacturer"; the picker's **"Any manufacturer"** option sets it too. Decline/cancel still return the `needs_clarification` fallback (decline may mean "stop", so we don't guess).
+  - **Firm list comes from openFDA's `count=recalling_firm.exact`,** not from the fetched records. The fetched 100 can miss firms (acetaminophen, all years: 244 matches); `count` covers every match and gives a recall count per firm. Names are merged with `normalize_firm` (counts summed), ranked by count.
+  - **Picker is capped at 8 firms** (most recalls first) + "Any manufacturer". Measured 2026-11-27: default view 3–14 firms (Tylenol 3, metformin 7, ibuprofen 9, acetaminophen 14); `include_past` 31–38. The question says how many firms exist and that the user can name an unlisted one in chat.
+  - **Flow:** no manufacturer and not `all_manufacturers` → `count` call first. One firm → normal search. Several → ask. Manufacturer given or `all_manufacturers` → normal search only.
+  - **Scope line in every answer:** a limitation saying FDA recall data names the recalling company and the states it was shipped to, not stores or pharmacies; the tool description says the same so the LLM can explain "recalls at my CVS" honestly.
+
+### D26 — Product-first search now; other primary keys (manufacturer, date) later — `accepted`
+- **Context:** Users may want "all recalls by Teva" or "recalls this month", not only "is product X recalled?". Supporting several primary search keys now would grow every tool and its tests during a tight sprint.
+- **Decision:** All tools stay product-first this sprint (`product` required). But build every search with the **clause list** pattern (one `if` per input, `" AND ".join(...)`), so adding a primary key later is one more `if` plus a "need at least one of product/manufacturer/date" check. Tracked in the plan's backlog.
+- **Why:** Avoids scope growth now without painting ourselves into a corner; the clause list costs nothing extra today.
 
 ### D25 — Server framework: Prefect's FastMCP (standalone `fastmcp`), not the SDK's `MCPServer` — `accepted`
 - **Context:** The official `mcp` SDK v2 ships its own server class (`MCPServer`, formerly the SDK's `FastMCP`). The standalone `fastmcp` package (maintained by Prefect, v4.2.6 installed 2026-11-26) runs on top of the same SDK and adds built-in auth providers (incl. WorkOS AuthKit and Auth0, see D20), an in-memory test `Client`, and deployment tooling. `server/main.py` was still empty, so switching cost nothing.

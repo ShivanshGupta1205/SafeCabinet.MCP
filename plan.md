@@ -29,6 +29,7 @@ Goal: you ask Claude Desktop a real question and your code answers it.
 
 1. **Wrap as an MCP server (1 h).** `server/main.py`: Prefect's FastMCP (D25), **stdio**, one tool (`check_drug_recalls`) calling your Day 1 function. Write a clear tool description — the LLM picks tools by reading it.
 2. **Elicitation branch (45 min, D22 + D25 postscript).** For the ambiguous-firm case, three branches: client didn't declare elicitation → return `needs_clarification` as-is; client on protocol 2026-07-28 → return an `InputRequiredResult` and read the answer from `ctx.input_responses` on the retry; older protocol → `await ctx.elicit(...)`. Branch on what the client actually declared, never guess.
+2b. **Manufacturer question refinements (1 h, D24 update 2026-11-27).** In `tools/drug_recalls.py`: `all_manufacturers` input; firm list via `count=recalling_firm.exact`, merged and ranked, capped at 8 + "Any manufacturer"; clause-list `build_search` (D26); store/pharmacy scope limitation. Record a `count` fixture. Tests first-class, as on Day 1.
 3. **Smoke-test with the Inspector (20 min).** `npx @modelcontextprotocol/inspector`, call the tool by hand, confirm the envelope comes back, and confirm which elicitation branch the Inspector takes (it's a reference client, so it likely supports elicitation — good sanity check that your `elicit()` call itself works before trusting it with Claude Desktop).
 4. **Connect to Claude Desktop (30 min).** Add the server to its config. Ask: "Is Tylenol recalled?", an ambiguous one, a junk product. **This is also your real answer to "does Claude Desktop support elicitation" — trust what you observe here, not a search result.** Note which branch it took in `DECISIONS.md` under D22 as a one-line postscript.
 5. **Write down every miss** (wrong tool, misread output, dropped caveat) — these become your mini-eval set on Day 5.
@@ -66,7 +67,7 @@ Same pattern again. This is the riskiest pair for over-claiming, so the caveats 
 Goal: tie it off, don't open new scope.
 
 1. **In-process TTL cache (1 h, cut first if behind).** Same query within N minutes skips the network call. Short TTL for recalls/shortages. Test: call twice, assert the second made no request.
-2. **Mini eval, run by hand (1.5 h, cut second if behind).** Not the 40–60-query CI harness from the old brief — just 10–15 queries in a YAML/script, covering all five tools plus your Day 2 miss-notes, scored by eye: right tool? right params? asked when ambiguous? caveats kept? Write down the score once. This is your before/after interview story, done cheaply.
+2. **Mini eval, run by hand (1.5 h, cut second if behind).** Not the 40–60-query CI harness from the old brief — just 10–15 queries in a YAML/script, covering all five tools plus your Day 2 miss-notes (must include: a follow-up question that keeps the earlier product, e.g. "what about Cardinal Health?" after a Tylenol question; "any brand" in the first message → no question asked; "recalls at my CVS" → honest scope answer), scored by eye: right tool? right params? asked when ambiguous? caveats kept? Write down the score once. This is your before/after interview story, done cheaply.
 3. **README + a short demo clip (1 h).** Who it's for, the 5 tools, one example conversation, "Roots: skipped, and why," your eval score.
 4. **Commit.**
 
@@ -92,7 +93,8 @@ This is everything from Phase 5 of `docs/PROJECT_BRIEF.md`. It's legitimate foll
 5. Structured logs + metrics + tracing (OpenTelemetry).
 6. Grow the eval set to 40–60 queries, move it into GitHub Actions, add LLM-as-judge for caveats.
 7. Multiple instances behind a load balancer + Redis cache.
-8. Stretch: medication watchlist with new-recall alerts; more beauty-domain tools.
+8. **More primary search keys (D26):** manufacturer-centric ("all Teva recalls") and date-centric ("recalls this month") searches, with `product` optional and "at least one key" required. Searches already use the clause-list pattern, so this is mostly new `if`s + tests.
+9. Stretch: medication watchlist with new-recall alerts; more beauty-domain tools.
 
 ## Known risks to watch
 - **openFDA matching is messy** (brand vs. generic names, lot numbers buried in free text). Expect most debugging time here — that's the real learning, budget for it.

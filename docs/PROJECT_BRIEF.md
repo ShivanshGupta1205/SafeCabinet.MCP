@@ -46,7 +46,7 @@ Known data limits the tools must surface (D16):
 
 ## The five tools
 ```python
-check_drug_recalls(product: str, manufacturer: str | None = None, lot_number: str | None = None, include_past: bool = False)  # D24
+check_drug_recalls(product: str, manufacturer: str | None = None, lot_number: str | None = None, include_past: bool = False, all_manufacturers: bool = False)  # D24
 check_food_recalls(brand: str, product: str | None = None, lot_number: str | None = None)
 get_side_effect_reports(drug: str, symptom: str | None = None, top_k: int = 10)
 check_drug_shortage(drug: str)                     # includes FDA-rated equivalents via te_code
@@ -56,7 +56,7 @@ Signatures are a starting point. Refine them while building, and record changes 
 
 | Tool | When it elicits (asks the user first) | Must-carry caveats |
 |---|---|---|
-| `check_drug_recalls` | Several manufacturers/products match → "Which manufacturer is on your bottle?" Recall found but no lot given → "What's the lot number on the label?" | Lot matching is best-effort; "no recall found" ≠ "safe"; data freshness |
+| `check_drug_recalls` | Several manufacturers match and `all_manufacturers` is False → "Which manufacturer?" (top 8 by recall count + "Any manufacturer") Recall found but no lot given → "What's the lot number on the label?" | Lot matching is best-effort; "no recall found" ≠ "safe"; data freshness; names the company and shipped-to states, not stores/pharmacies |
 | `check_food_recalls` | Brand matches many products → "Which product/size?" | Same as drug recalls |
 | `get_side_effect_reports` | Name maps to several distinct drugs/formulations | Not a rate; not proof of cause; reporting bias; talk to a clinician |
 | `check_drug_shortage` | Ingredient has several formulations/strengths in shortage | National, not local; equivalents are options to ask a pharmacist about |

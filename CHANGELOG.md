@@ -2,6 +2,10 @@
 
 One line per meaningful change, per docs/CLAUDE.md convention.
 
+## 2026-11-27
+- Wrote `server/main.py` elicitation branches A/B/C (FastMCP); tested A and B in memory.
+- Refined the manufacturer question (D24 update): `all_manufacturers` input, firm list from openFDA `count`, picker capped at 8 + "Any manufacturer", store/pharmacy scope line. Recorded D26 (product-first now, other primary keys in backlog). Updated plan and brief.
+
 ## 2026-11-26
 - Switched the server framework to Prefect's FastMCP (`fastmcp` 4.2.6, D25); added the dependency, updated conventions and the Day 2 plan. Found that elicitation on protocol 2026-07-28 uses `InputRequiredResult` instead of `ctx.elicit()` (D22 postscript).
 - Built `openfda/client.py` + `errors.py` and `scripts/record_fixtures.py`; recorded drug-enforcement fixtures (tylenol, metformin, atorvastatin, lisinopril).
