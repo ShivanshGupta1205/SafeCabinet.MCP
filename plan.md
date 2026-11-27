@@ -18,7 +18,9 @@ Goal: a plain Python function that answers "is this drug recalled?" — provably
    - **First, 15 min research (D24):** settle which parameters the tool accepts (manufacturer, lot, status, date; location optional) and the "ask only when the answer changes the result" rule. Add the one-firm fixture (e.g. metformin + Teva) for the no-question test. Report the true total as `match_count`, never just the page size.
 5. **Tests (included above, not separate time).** `tests/test_drug_recalls.py` against fixtures only, no network: recall found, no recall found, lot match, ambiguous case.
 
-**Done when:** `uv run pytest` is green with zero network calls.
+6. **CI (20 min).** `.github/workflows/tests.yml`: on every push and pull request, install with `uv` and run `pytest`. No secrets needed, since tests use fixtures. Live checks and evals stay out of CI.
+
+**Done when:** `uv run pytest` is green with zero network calls, and GitHub shows a green check on the push.
 
 ---
 
