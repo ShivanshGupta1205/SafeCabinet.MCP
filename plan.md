@@ -27,8 +27,8 @@ Goal: a plain Python function that answers "is this drug recalled?" — provably
 ## Day 2 — First tool live in Claude Desktop
 Goal: you ask Claude Desktop a real question and your code answers it.
 
-1. **Wrap as an MCP server (1 h).** `server/main.py`: official SDK, **stdio**, one tool (`check_drug_recalls`) calling your Day 1 function. Write a clear tool description — the LLM picks tools by reading it.
-2. **Elicitation branch (30 min, D22).** For the ambiguous-firm case: check whether the connected client declared the elicitation capability during the handshake. If yes, call real `ctx.elicit(...)`. If no, return the `needs_clarification` field from Day 1's function as-is. Don't hardcode either path — branch on what the client actually declared.
+1. **Wrap as an MCP server (1 h).** `server/main.py`: Prefect's FastMCP (D25), **stdio**, one tool (`check_drug_recalls`) calling your Day 1 function. Write a clear tool description — the LLM picks tools by reading it.
+2. **Elicitation branch (45 min, D22 + D25 postscript).** For the ambiguous-firm case, three branches: client didn't declare elicitation → return `needs_clarification` as-is; client on protocol 2026-07-28 → return an `InputRequiredResult` and read the answer from `ctx.input_responses` on the retry; older protocol → `await ctx.elicit(...)`. Branch on what the client actually declared, never guess.
 3. **Smoke-test with the Inspector (20 min).** `npx @modelcontextprotocol/inspector`, call the tool by hand, confirm the envelope comes back, and confirm which elicitation branch the Inspector takes (it's a reference client, so it likely supports elicitation — good sanity check that your `elicit()` call itself works before trusting it with Claude Desktop).
 4. **Connect to Claude Desktop (30 min).** Add the server to its config. Ask: "Is Tylenol recalled?", an ambiguous one, a junk product. **This is also your real answer to "does Claude Desktop support elicitation" — trust what you observe here, not a search result.** Note which branch it took in `DECISIONS.md` under D22 as a one-line postscript.
 5. **Write down every miss** (wrong tool, misread output, dropped caveat) — these become your mini-eval set on Day 5.
@@ -96,5 +96,5 @@ This is everything from Phase 5 of `docs/PROJECT_BRIEF.md`. It's legitimate foll
 
 ## Known risks to watch
 - **openFDA matching is messy** (brand vs. generic names, lot numbers buried in free text). Expect most debugging time here — that's the real learning, budget for it.
-- **Elicitation is already decided** (D22: fallback field, not native) — don't re-open that question mid-week.
+- **Elicitation is already decided** (D22 + D25 postscript: branch on capability and protocol version) — don't re-open that question mid-week.
 - **5 days is still tight against finals coming up.** If behind, cut in this order: Day 6 stretch → Day 5 cache → Day 5 mini-eval. Never cut a tool's tests.

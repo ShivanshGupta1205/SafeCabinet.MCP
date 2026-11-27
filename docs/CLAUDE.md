@@ -13,7 +13,7 @@ This is a **code-first, learn-by-doing** project. The teaching-project gate that
 Plain, student–teacher. Explain the "why" before the "what". Define a term the first time it's used. Short sentences, few ideas per paragraph. Being plain must not drop critical information. (Persisted in memory: `communication-style-plain`.)
 
 ## Conventions
-- Python + official `mcp` SDK, managed with `uv` (`pyproject.toml` is the dependency source of truth). stdio → Streamable HTTP per `PROJECT_BRIEF.md`.
+- Python + Prefect's **FastMCP** (`fastmcp`, built on the official `mcp` SDK, D25), managed with `uv` (`pyproject.toml` is the dependency source of truth). stdio → Streamable HTTP per `PROJECT_BRIEF.md`.
 - Data comes **live from the openFDA JSON API** — no database, no scraping, no PDF parsing (DECISIONS.md D14). Store only data that is ours.
 - Only the `openfda/` client knows openFDA URLs. Tools go through it.
 - Every tool returns the shared output envelope, **including its data limitations** (D16). Tool names must not promise more than the data supports.

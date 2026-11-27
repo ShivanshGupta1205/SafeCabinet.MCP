@@ -3,6 +3,7 @@
 One line per meaningful change, per docs/CLAUDE.md convention.
 
 ## 2026-11-26
+- Switched the server framework to Prefect's FastMCP (`fastmcp` 4.2.6, D25); added the dependency, updated conventions and the Day 2 plan. Found that elicitation on protocol 2026-07-28 uses `InputRequiredResult` instead of `ctx.elicit()` (D22 postscript).
 - Built `openfda/client.py` + `errors.py` and `scripts/record_fixtures.py`; recorded drug-enforcement fixtures (tylenol, metformin, atorvastatin, lisinopril).
 - Built `tools/drug_recalls.py` (`check_drug_recalls`): default "Ongoing or last 6 months" filter, `include_past` flag, max 10 results, manufacturer question with merged firm names (D24 update).
 - Renamed the Teva fixture to `drug_enforcement_metformin_teva.json`; fixture script now writes lowercase names without spaces.
